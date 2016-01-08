@@ -1,6 +1,9 @@
 README for pympler
 ==================
 
+[![Latest Version](https://pypip.in/version/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+[![License](https://pypip.in/license/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+
 
 Before installing Pympler, try it with your Python version:
 
@@ -9,33 +12,23 @@ Before installing Pympler, try it with your Python version:
 If any errors are reported, check whether your Python version is
 supported by all the Pympler modules. Pympler is written entirely in
 Python, with no dependencies other than standard Python modules and
-libraries. Pympler works with Python 2.5, 2.6, 2.7, 3.1, 3.2 and 3.3.
+libraries. Pympler works with Python 2.5, 2.6, 2.7, 3.1, 3.2, 3.3 and 3.4.
 
 Installation
+------------
 
-1. Build the Pympler package:
-
-    python setup.py build
-
-2.a) For a system-wide installation run:
+For a system-wide installation run:
 
     python setup.py install
 
-2.b) For a user-specific** installation run:
-
-    python setup.py --user install
-
-3) Test the installed Pympler package:
+Test the installed Pympler package:
 
     python setup.py test
 
 
-**) Note, the user-specific installation requires
-    Python 2.6 or higher.
-
-
 Usage
 -----
+
 The usage of pympler is described in the documentation.  It is
 available either in this distribution at *doc/index.html* or
 you can [read it online](http://packages.python.org/Pympler/).
@@ -43,9 +36,11 @@ you can [read it online](http://packages.python.org/Pympler/).
 
 Contributing
 ------------
+
 You can post wishes, bug reports or patches at our
 [issue tracker](https://github.com/pympler/pympler/issues) or
 write an email to *pympler-dev@googlegroups.com*.
 
 
 [![Build status](https://secure.travis-ci.org/pympler/pympler.png?branch=master)](http://travis-ci.org/pympler/pympler)
+[![Coverage Status](https://coveralls.io/repos/pympler/pympler/badge.svg?branch=master)](https://coveralls.io/r/pympler/pympler?branch=master)

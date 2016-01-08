@@ -27,12 +27,12 @@ from pympler.process import ProcessMemoryInfo
 from pympler.util.stringutils import pp
 
 try:
-    from debug_toolbar.panels import DebugPanel
+    from debug_toolbar.panels import Panel
     from django.db.models import get_models
     from django.template import Context, Template
     from django.template.loader import render_to_string
 except ImportError:
-    class DebugPanel(object):
+    class Panel(object):
         pass
 
     class Template(object):
@@ -42,11 +42,11 @@ except ImportError:
         pass
 
 
-class MemoryPanel(DebugPanel):
+class MemoryPanel(Panel):
 
     name = 'pympler'
 
-    has_content = True
+    title = 'Memory'
 
     template = 'memory_panel.html'
 
@@ -55,49 +55,53 @@ class MemoryPanel(DebugPanel):
     def process_request(self, request):
         self._tracker = ClassTracker()
         for cls in get_models() + self.classes:
-            self._tracker.track_class(cls, keep=True)
+            self._tracker.track_class(cls)
         self._tracker.create_snapshot('before')
-        self._before = ProcessMemoryInfo()
+        self.record_stats({'before': ProcessMemoryInfo()})
 
     def process_response(self, request, response):
-        self._after = ProcessMemoryInfo()
+        self.record_stats({'after': ProcessMemoryInfo()})
         self._tracker.create_snapshot('after')
-
-    def title(self):
-        return 'Memory'
-
-    def nav_title(self):
-        return 'Memory'
-
-    def nav_subtitle(self):
-        rss = self._after.rss
-        delta = rss - self._before.rss
-        delta = ('(+%s)' % pp(delta)) if delta > 0 else ''
-        return "RSS: %s %s" % (pp(rss), delta)
-
-    def url(self):
-        return ''
-
-    def get_stats(self):
-        pass
-
-    def content(self):
         stats = self._tracker.stats
         stats.annotate()
-        context = self.context.copy()
-        rows = [('Resident set size', self._after.rss),
-                ('Virtual size', self._after.vsz),
+        self.record_stats({'stats': stats})
+
+    def enable_instrumentation(self):
+        self._tracker = ClassTracker()
+        for cls in get_models() + self.classes:
+            self._tracker.track_class(cls)
+
+    def disable_instrumentation(self):
+        self._tracker.detach_all_classes()
+
+    def nav_subtitle(self):
+        context = self.get_stats()
+        before = context['before']
+        after = context['after']
+        rss = after.rss
+        delta = rss - before.rss
+        delta = ('(+%s)' % pp(delta)) if delta > 0 else ''
+        return "%s %s" % (pp(rss), delta)
+
+    @property
+    def content(self):
+        context = self.get_stats()
+        before = context['before']
+        after = context['after']
+        stats = context['stats']
+        rows = [('Resident set size', after.rss),
+                ('Virtual size', after.vsz),
                 ]
-        rows.extend(self._after - self._before)
+        rows.extend(after - before)
         rows = [(key, pp(value)) for key, value in rows]
-        rows.extend(self._after.os_specific)
+        rows.extend(after.os_specific)
 
         classes = []
         snapshot = stats.snapshots[-1]
         for model in stats.tracked_classes:
-            cnt = snapshot.classes.get(model, {}).get('active', 0)
+            history = [cnt for _, cnt in stats.history[model]]
             size = snapshot.classes.get(model, {}).get('sum', 0)
-            if cnt > 0:
-                classes.append((model, cnt, pp(size)))
+            if history and history[-1] > 0:
+                classes.append((model, history, pp(size)))
         context.update({'rows': rows, 'classes': classes})
         return render_to_string(self.template, context)

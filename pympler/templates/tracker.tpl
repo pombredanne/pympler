@@ -1,6 +1,7 @@
 %include header category='Tracker', title='Tracked objects' 
 
 %from pympler.util.stringutils import pp, pp_timestamp
+%from pympler.util.compat import dumps
 
 <h1>Tracked objects</h1>
 
@@ -8,71 +9,47 @@
 
     <h2>Memory distribution over time</h2>
 
-    <div id="memory_chart" style="width:100%; height: {{len(snapshots)*16+100}}px">
-        Please activate Javascript to view the chart.
-    </div>
+    <div id="memory_chart_flot" style="width:100%; height: 400px"></div>
 
-    <script type="text/javascript" src="/static/highcharts.js"></script>
+    <script type="text/javascript" src="/static/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.flot.stack.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.flot.tooltip.min.js"></script>
     <script type="text/javascript">
         function format_size(value) {
-            var suffix = ['Byte', 'KB', 'MB', 'GB'];
-            var suffix_index = 0;
-            while (value > 10000 && suffix_index < suffix.length) {
-                value = Math.round(value / 1000);
-                suffix_index += 1;
-            }
-            return value.toLocaleString() + ' ' + suffix[suffix_index];
-        }
+            var val = Math.round(value / (1000*1000));
+            return val.toLocaleString() + ' MB';
+        };
         
-        var chart;
         $(document).ready(function() {
-            chart = new Highcharts.Chart({
-                chart: {
-                    renderTo: 'memory_chart',
-                    defaultSeriesType: 'bar'
-                },
-                title: {
-                    text: 'Process memory distribution per snapshot'
-                },
-                xAxis: {
-                    categories: {{[sn.label for sn in snapshots]}},
-                },
-                yAxis: {
-                    min: 0,
-                    title: {
-                        text: 'Allocated memory [Bytes]'
-                    }
-                },
-                legend: {
-                    backgroundColor: '#FFFFFF',
-                    reversed: true
-                },
-                tooltip: {
-                    formatter: function() {
-                        return ''+
-                             this.series.name +': ' + format_size(this.y);
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        borderWidth: 0,
-                        groupPadding: 0.1,
-                        shadow: false,
+            var timeseries = {{!timeseries}};
+            var options = {
+                    xaxis: {
+                        show: false,
+                    },
+                    yaxis: {
+                        tickFormatter: format_size
+                    },
+                    grid: {
+                        hoverable: true
+                    },
+                    tooltip: true,
+                    tooltipOpts: {
+                        content: "%s | %y"
+                    },
+                    legend: {
+                        position: "nw"
                     },
                     series: {
-                        animation: false,
-                        stacking: 'normal'
-                    }
-                },
-                series: [
-                    % for name, series in timeseries[::-1]:
-                        {
-                            name: '{{name}}',
-                            data: {{series}},
+                        bars: {
+                            show: true,
+                            barWidth: .9,
+                            fillColor: { colors: [ { opacity: 0.9 }, { opacity: 0.9 } ] },
+                            align: "center"
                         },
-                    % end
-                ],
-            });
+                        stack: true
+                    }
+                };
+            $.plot($('#memory_chart_flot'), timeseries, options);
         });
     </script>
 
